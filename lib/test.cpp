@@ -16,12 +16,27 @@ double clipped;
 int read_jpeg_file(char* filename);
 
 int main() {
-    for (int i = 1; i < 32; i++) {
-        char filename[64];
-        sprintf(filename, "test/img-%05d.jpg", i);
+    char filename[64];
+    sprintf(filename, "all_hist.csv");
+    FILE* of = fopen(filename, "w");
+    for (int i = 1; i < 9999; i++) {
+        sprintf(filename, "tl/%04d.jpg", i);
+
+        if (access(filename, F_OK) != 0)
+            continue;
+
         read_jpeg_file(filename);
-        printf("%d: %f, %f\n", i, luminance, clipped);
+        printf("%d %s: %f, %f\n", i, filename, luminance, clipped);
+
+        fprintf(of, "%s, ", filename);
+
+        for (int h = 0; h < 256; h++) {
+            fprintf(of, "%d", histogram[h]);
+            fprintf(of, ", ");
+        }
+        fprintf(of, "\n");
     }
+    fclose(of);
 }
 
 
@@ -106,6 +121,11 @@ int read_jpeg_file(char* filename) {
 
     width = cinfo.output_width;
     height = cinfo.output_height;
+#ifdef DEBUG_PPM
+    FILE* ppm = fopen("first.ppm", "wb"); /* b - binary mode */
+    (void)fprintf(ppm, "P6\n%d %d\n255\n", width, height);
+#endif
+
     luminance = 0.0;
     size = cinfo.output_width * cinfo.output_height * cinfo.num_components * sizeof(unsigned int);
     memset(histogram, 0, sizeof(int) * 256);
@@ -117,27 +137,36 @@ int read_jpeg_file(char* filename) {
     float ratio = (float)width / (float)height;
     if (ratio < 1.75) {
         skip_rows = (height - ((float)width) / 1.75) / 2;
-        //printf("skipping %d rows on top and bottom", skip_rows);
+        //printf("skipping %d rows on top and bottom ", skip_rows);
     }
-
+    int n = cinfo.num_components;
     while (cinfo.output_scanline < cinfo.image_height) {
         row_number++;
         jpeg_read_scanlines(&cinfo, row_pointer, 1);
-        if (row_number <= skip_rows) continue;
-        if (row_number > height - skip_rows) continue;
-        for (i = 0; i < cinfo.image_width; i += cinfo.num_components) {
-            unsigned int m = 0;
-            for (component = 0; component < cinfo.num_components; component++) {
-                if (component < 3) {
-                    unsigned int p = row_pointer[0][i + component];
-                    if (p > m) m = p;
-                }
-            }
-            if (m > 255) m = 255;
+        //TODO hide for now
+        //if(row_number <= skip_rows) continue;
+        //if(row_number > height - skip_rows) continue;
+        for (i = 0; i < cinfo.image_width; i++) {
+            unsigned int m;
+            float r = (float)row_pointer[0][i * n + 0] * 0.299f;
+            float g = (float)row_pointer[0][i * n + 1] * 0.587f;
+            float b = (float)row_pointer[0][i * n + 2] * 0.114f;
+            m = r + g + b;
+#ifdef DEBUG_PPM
+
+            static unsigned char color[3];
+            color[0] = m; /* red */
+            color[1] = m; /* green */
+            color[2] = m; /* blue */
+            fwrite(color, 1, 3, ppm);
+#endif
             histogram[m]++;
             total_count++;
         }
     }
+#ifdef DEBUG_PPM
+    fclose(ppm);
+#endif
 
     unsigned long count = 0, sum = 0;
     luminance = 0.0;

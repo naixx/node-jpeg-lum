@@ -1,12 +1,12 @@
 {
-  "author": "Elijah Parker",
+  "author": "naixx@github",
   "name": "jpeg-lum",
-  "description": "Reads luminance and histogram data from JPEG images (based on Bill Yeh's pixelr)",
-  "version": "0.2.1",
-  "homepage": "https://github.com/elijahparker/node-jpeg-lum/",
+  "description": "Reads luminance and histogram data from JPEG images (based on Bill Yeh's pixelr and Elijah Parker)",
+  "version": "0.5",
+  "homepage": "https://github.com/naixx/node-jpeg-lum/",
   "repository": {
     "type": "git",
-    "url": "git://github.com/elijahparker/node-jpeg-lum.git"
+    "url": "git://github.com/naixx/node-jpeg-lum.git"
   },
   "keywords": [
     "photography",

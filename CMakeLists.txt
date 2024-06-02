@@ -9,8 +9,9 @@ include_directories(
 
 add_executable(jpeg-lum-test
         lib/test.cpp
-#        lib/jpeg-lum.cc
+        lib/lib.cc
 )
+
 target_link_directories(jpeg-lum-test PUBLIC
         /opt/libjpeg-turbo/lib64
 )

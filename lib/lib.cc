@@ -13,6 +13,7 @@ unsigned int width;
 unsigned int height;
 double luminance;
 double clipped;
+double mean;
 
 #define LUT_LENGTH 33
 
@@ -145,14 +146,17 @@ int read_jpeg_file(char* filename) {
     unsigned long count = 0, sum = 0;
     luminance = 0.0;
     hist_max = 0;
+    mean = 0.0;
     for (int i = 0; i < 256; i++) {
         sum += histogram[i];
         if (histogram[i] > hist_max) hist_max = histogram[i];
         //if (sum < total_count / 2) continue; // only look at the upper 50%
         luminance += lum((float)i) * (float)histogram[i];
+        mean += histogram[i]*i;
         count += histogram[i];
     }
-
+    mean /= count;
+    //mean = lum(mean);
     clipped = (double)histogram[255] / (double)count;
     luminance /= (double)count;
     jpeg_finish_decompress(&cinfo);

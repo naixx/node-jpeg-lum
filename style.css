@@ -1,0 +1,25 @@
+.histogram {
+    display: flex;
+    align-items: flex-end;
+    width: 512px;
+    min-heigth: 120px;
+    height: 120px;
+    margin-left: 20px;
+    border: 1px solid gray;
+}
+
+.bar {
+    background-color: steelblue;
+    width: 4px;
+    min-width: 2px;
+}
+
+#root {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.img {
+    width: 160px;
+    height: 120px;
+}

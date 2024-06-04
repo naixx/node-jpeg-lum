@@ -8,6 +8,11 @@
     border: 1px solid gray;
 }
 
+.over{
+    background-color: rgba(180, 70, 149, 0.58);
+
+}
+
 .bar {
     background-color: steelblue;
     width: 4px;

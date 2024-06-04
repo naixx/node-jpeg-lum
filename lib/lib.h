@@ -14,7 +14,7 @@ extern double luminance;
 extern double clipped;
 extern double mean;
 
-int read_jpeg_file(char* filename);
+int read_jpeg_file(const char* filename);
 double lum(double x);
 
 #endif //LIB_H

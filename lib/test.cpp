@@ -1,9 +1,14 @@
 #include <algorithm>
 #include <cmath>
+#include <cstring>
+#include <numeric>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <filesystem>
 #include "lib.h"
+
+namespace fs = std::filesystem;
 
 
 float calculateNormalizedMedian(unsigned int histogramValues[], int size) {
@@ -54,6 +59,18 @@ double isHistogramEqualized(unsigned int histogram[], int size) {
     return diff;
 }
 
+unsigned int underexposed(unsigned int histogram[], int size) {
+    return std::accumulate(histogram, histogram + size / 2, 0u);
+}
+
+unsigned int overexposed(unsigned int histogram[], int size) {
+    return std::accumulate(histogram + size / 2, histogram + size, 0u);
+}
+
+unsigned int highlights(unsigned int histogram[], int size) {
+    return std::accumulate(histogram + int(size * 0.75), histogram + size, 0u);
+}
+
 #define prnt(format, ...) printf(format, __VA_ARGS__ );fprintf(html, format, __VA_ARGS__ );
 
 int main() {
@@ -72,18 +89,27 @@ int main() {
         "<body>");
 
 
-    for (int i = 1; i < 9999; i++) {
-        sprintf(filename, "tl/%04d.jpg", i);
+    for (const auto& entry : fs::directory_iterator("tl")) {
+        if (!entry.is_regular_file() || strcasecmp(entry.path().extension().string().c_str(), ".jpg") != 0) continue;
+        auto filename = entry.path().filename().c_str();
 
-        if (access(filename, F_OK) != 0)
-            continue;
 
-        read_jpeg_file(filename);
+        read_jpeg_file(entry.path().c_str());
         fprintf(html, "<div id='root' >\n<img class='img' src='%s'></img>\n",
-                filename);
+                entry.path().c_str());
 
-        fprintf(html, "<div class='histogram'  >\n");
+        auto u = underexposed(histogram, std::size(histogram));
+        auto o = overexposed(histogram, std::size(histogram));
+        auto h = highlights(histogram, std::size(histogram));
+        uint overexposed = 100 * o / (u + o);
+        uint underexposed = 100 * u / (u + o);
+        uint hi = 100 * h / (u + o);
         auto max = *std::max_element(histogram, histogram + 256);
+
+        if (hi > 30 && underexposed <= 51 || (histogram[255] == max && underexposed < 70))
+            fprintf(html, "<div class='histogram over'  >\n");
+        else
+            fprintf(html, "<div class='histogram'  >\n");
         for (auto h : histogram) {
             fprintf(html, "<div class='bar' style='height: %d%%' ></div>\n", 100 * h / (max));
         }
@@ -93,13 +119,19 @@ int main() {
         float median = calculateNormalizedMedian(histogram, 256);
         double diff = isHistogramEqualized(histogram, 256);
         int threshold = 0.1 * 256;
-        prnt("%d %s: %.02f, %.02f, mean = %.02f,lum(mean) = %.02f, median = %.02f, lum(med)=%.02f", i, filename, luminance, clipped, mean,
+        prnt("%s: ev=%.02f,  mean = %.02f,lum(mean) = %.02f, median = %.02f, lum(med)=%.02f", entry.path().c_str(), luminance,
+             mean,
              lum(mean),
              median, lum(median));
         prnt(", 1/2.2 = %.02f", std::pow(mean/255, 1/2.2));
         prnt(", 2.2 = %.02f", std::pow(mean/255, 2.2));
         prnt(", diff = %.02f %d ", diff/256, threshold);
         prnt(",  %f ", (diff - threshold));
+
+
+        prnt(",  under=%d%% over = %d%%", underexposed, overexposed);
+        prnt(",  clipped=%f", clipped);
+        prnt(",  highlights=%d%%", 100*h / (u+o));
 
         fprintf(html, "</div>\n");
 

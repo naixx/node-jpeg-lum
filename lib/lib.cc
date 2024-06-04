@@ -78,7 +78,7 @@ double lum(double x) {
     return 0; // Not in Range
 }
 
-int read_jpeg_file(char* filename) {
+int read_jpeg_file(const char* filename) {
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
     JSAMPROW row_pointer[1];
